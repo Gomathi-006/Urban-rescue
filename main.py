@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from pydantic import BaseModel
 from typing import Dict, Optional
 
@@ -9,7 +9,6 @@ app = FastAPI()
 env = create_task("medium")
 
 
-# ✅ Make body OPTIONAL
 class ResetRequest(BaseModel):
     level: Optional[str] = "medium"
 
@@ -18,12 +17,13 @@ class StepRequest(BaseModel):
     actions: Dict[str, str]
 
 
+# ✅ CRITICAL FIX
 @app.post("/reset")
-def reset(req: ResetRequest = None):   # ✅ THIS IS THE FIX
+def reset(req: Optional[ResetRequest] = Body(default=None)):
     global env
 
     level = "medium"
-    if req and req.level:
+    if req is not None and req.level is not None:
         level = req.level
 
     env = create_task(level)
