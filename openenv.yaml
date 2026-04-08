@@ -1,0 +1,30 @@
+name: UrbanRescueEnv
+entrypoint: env:UrbanRescueEnv
+language: python
+description: >
+  Grid-based multi-agent disaster response environment with Hugging Face
+  action policies and graded easy, medium, and hard tasks.
+levels:
+  - easy
+  - medium
+  - hard
+files:
+  - env.py
+  - tasks.py
+  - graders.py
+  - sample_agent_loop.py
+  - app.py
+interfaces:
+  required_methods:
+    - reset
+    - step
+    - state
+agents:
+  - rescue
+  - fire_control
+  - supply
+grading:
+  type: scalar
+  range:
+    min: 0.0
+    max: 1.0
