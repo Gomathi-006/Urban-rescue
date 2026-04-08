@@ -1,5 +1,5 @@
 name: UrbanRescueEnv
-entrypoint: env:UrbanRescueEnv
+entrypoint:main:app
 language: python
 description: >
   Grid-based multi-agent disaster response environment with Hugging Face
