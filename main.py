@@ -1,36 +1,41 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import Dict, Optional
+from typing import Dict
 
+try:
+    import gradio as gr
+except Exception:  # pragma: no cover - optional UI dependency
+    gr = None
+
+from app import build_app
 from tasks import create_task
 
-app = FastAPI()
 
+api = FastAPI(title="UrbanRescueEnv")
 env = create_task("medium")
 
 
 class ResetRequest(BaseModel):
-    level: Optional[str] = "medium"
+    level: str = "medium"
 
 
 class StepRequest(BaseModel):
     actions: Dict[str, str]
 
 
-# ✅ CRITICAL FIX
-@app.post("/reset")
-def reset(req: Optional[ResetRequest] = Body(default=None)):
+@api.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@api.post("/reset")
+def reset(req: ResetRequest):
     global env
-
-    level = "medium"
-    if req is not None and req.level is not None:
-        level = req.level
-
-    env = create_task(level)
+    env = create_task(req.level)
     return env.reset()
 
 
-@app.post("/step")
+@api.post("/step")
 def step(req: StepRequest):
     state, reward, done, info = env.step(req.actions)
     return {
@@ -41,6 +46,18 @@ def step(req: StepRequest):
     }
 
 
-@app.get("/state")
+@api.get("/state")
 def state():
     return env.state()
+
+
+if gr is not None:
+    app = gr.mount_gradio_app(api, build_app(), path="/")
+else:  # pragma: no cover - optional UI dependency
+    @api.get("/")
+    def root():
+        return {
+            "message": "UrbanRescueEnv API is running. Install gradio to serve the UI at /."
+        }
+
+    app = api
