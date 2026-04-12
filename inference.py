@@ -7,12 +7,9 @@ from openai import OpenAI
 from tasks import create_task
 
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Llama-3.1-8B-Instruct:cerebras")
 HF_TOKEN = os.getenv("HF_TOKEN")
-DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
-DEFAULT_HF_BASE_URL = "https://router.huggingface.co/v1"
-DEFAULT_OPENAI_MODEL = "gpt-4.1-mini"
-DEFAULT_HF_MODEL = "meta-llama/Llama-3.1-8B-Instruct:cerebras"
 ACTION_NAMES = {
     "move_up",
     "move_down",
@@ -25,33 +22,12 @@ ACTION_NAMES = {
     "deliver_supply",
 }
 
-if not (OPENAI_API_KEY or HF_TOKEN):
-    raise ValueError("Set OPENAI_API_KEY or HF_TOKEN before running inference.py")
-
-
-def resolve_client_config():
-    if OPENAI_API_KEY:
-        return {
-            "provider": "openai",
-            "api_key": OPENAI_API_KEY,
-            "base_url": os.getenv("API_BASE_URL", DEFAULT_OPENAI_BASE_URL),
-            "model": os.getenv("MODEL_NAME", DEFAULT_OPENAI_MODEL),
-        }
-
-    return {
-        "provider": "huggingface",
-        "api_key": HF_TOKEN,
-        "base_url": os.getenv("API_BASE_URL", DEFAULT_HF_BASE_URL),
-        "model": os.getenv("MODEL_NAME", DEFAULT_HF_MODEL),
-    }
-
-
-CLIENT_CONFIG = resolve_client_config()
-MODEL_NAME = CLIENT_CONFIG["model"]
+if not HF_TOKEN:
+    raise ValueError("Set HF_TOKEN before running inference.py")
 
 client = OpenAI(
-    base_url=CLIENT_CONFIG["base_url"],
-    api_key=CLIENT_CONFIG["api_key"],
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN,
 )
 
 
@@ -151,8 +127,8 @@ def run_episode():
     state = env.reset()
 
     print(
-        f"[START] task=urban_rescue env=openenv provider={CLIENT_CONFIG['provider']} "
-        f"model={MODEL_NAME} base_url={CLIENT_CONFIG['base_url']}"
+        f"[START] task=urban_rescue env=openenv provider=openai_compatible "
+        f"model={MODEL_NAME} base_url={API_BASE_URL}"
     )
 
     step_count = 0
