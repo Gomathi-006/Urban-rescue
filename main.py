@@ -29,7 +29,7 @@ def health():
 
 
 @api.post("/reset")
-def reset(req: ResetRequest):
+def reset(req: ResetRequest = ResetRequest()):
     global env
     env = create_task(req.level)
     return env.reset()
