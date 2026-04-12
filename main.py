@@ -2,14 +2,19 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Dict
 
+try:
+    import gradio as gr
+except Exception:  # pragma: no cover - optional UI dependency
+    gr = None
+
+from app import build_app
 from tasks import create_task
 
-app = FastAPI()
 
+api = FastAPI(title="UrbanRescueEnv")
 env = create_task("medium")
 
 
-# ✅ Request models (fixes your error)
 class ResetRequest(BaseModel):
     level: str = "medium"
 
@@ -18,15 +23,19 @@ class StepRequest(BaseModel):
     actions: Dict[str, str]
 
 
-@app.post("/reset")
+@api.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@api.post("/reset")
 def reset(req: ResetRequest):
     global env
     env = create_task(req.level)
-    state = env.reset()
-    return state
+    return env.reset()
 
 
-@app.post("/step")
+@api.post("/step")
 def step(req: StepRequest):
     state, reward, done, info = env.step(req.actions)
     return {
@@ -37,6 +46,18 @@ def step(req: StepRequest):
     }
 
 
-@app.get("/state")
+@api.get("/state")
 def state():
     return env.state()
+
+
+if gr is not None:
+    app = gr.mount_gradio_app(api, build_app(), path="/")
+else:  # pragma: no cover - optional UI dependency
+    @api.get("/")
+    def root():
+        return {
+            "message": "UrbanRescueEnv API is running. Install gradio to serve the UI at /."
+        }
+
+    app = api
